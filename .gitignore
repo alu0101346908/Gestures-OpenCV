@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+*.avi
+
 # Distribution / packaging
 .Python
 build/
