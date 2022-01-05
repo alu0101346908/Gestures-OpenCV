@@ -15,7 +15,7 @@ def angle(s,e,f):
     return ang*180/np.pi
 	
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 backSub = cv2.createBackgroundSubtractorMOG2(detectShadows = True)
 
 if not cap.isOpened:
@@ -41,13 +41,18 @@ while (True):
 
 	gray = cv2.cvtColor(roi,cv2.COLOR_RGB2GRAY)
 	contours, hierarchy = cv2.findContours(fgMask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2:]
-	cv2.drawContours(roi, contours, -1, (0,255,0),3)
-	if (len(contours) > 0):
-		for i in range (len(contours)):
-			cnt = contours[i]
+	contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+	if (len(contours) > 0 and cv2.contourArea(contours[0]) > 100.0):
+		cv2.drawContours(roi, contours[0], -1, (0,255,0),3)
+		for i in range (1):
+			cnt = contours[0]
 			hull = cv2.convexHull(cnt,returnPoints = False)
 			hull[::-1].sort(axis=0)
 			defects = cv2.convexityDefects(cnt,hull)
+			rect = cv2.boundingRect(cnt)
+			pt_1 = (rect[0],rect[1])
+			pt_2 = (rect[0]+rect[2],rect[1]+rect[3])
+			cv2.rectangle(roi,pt_1,pt_2,(0,0,255),3)
 			if (defects is not None):
 				for k in range(len(defects)):
 					s,e,f,d = defects[k][0]
@@ -55,7 +60,7 @@ while (True):
 					end = tuple(cnt[e][0])
 					far = tuple(cnt[f][0])
 					depth = d/256.0
-					print(depth)
+					#print(depth)
 					ang = angle(start,end,far)
 					cv2.line(roi,start,end,[255,0,0],2)
 					cv2.circle(roi,far,5,[0,0,255],-1)
