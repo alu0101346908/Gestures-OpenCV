@@ -52,16 +52,26 @@ def on_change_process_rectangle_width(value):
 
 global pt1
 global pt2
-cap = cv2.VideoCapture(0)
+opened = False
+i = 0
+while (not opened and i <= 5):
+	cap = cv2.VideoCapture(i)
+	if cap.read()[0]:
+		opened = True
+	i +=1
+	if (i == 6):
+		print ("No hay ninguna camara disponible")
+		exit(0)
 backSub = cv2.createBackgroundSubtractorMOG2(history = 2, detectShadows = True,varThreshold=50)
 max_angle = 90
 area_threshold = 60
-if not cap.isOpened:
-    print ("Unable to open file")
-    exit(0)
-	#pendiente hacerlo relativo al tamaño de la feed de la camara
+
 pt1 = (850,250)
 pt2 = (1150,350)
+if (pt2[0] > cap.get(cv2.CAP_PROP_FRAME_WIDTH) or pt2[1] > cap.get(cv2.CAP_PROP_FRAME_HEIGHT)):
+	pt1 = (0,0)
+	pt2 = (1,1)
+
 #pt1 = (1300,250)
 #pt2 = (1700,700)
 cv2.namedWindow('roi')
@@ -70,7 +80,7 @@ cv2.namedWindow('frame')
 cv2.moveWindow('roi',120,300)
 cv2.moveWindow('frame',600,100)
 cv2.createTrackbar('Angle', 'tools' , 90, 180, on_change)
-cv2.createTrackbar('MOG2Threshold', 'tools' , 50, 100, on_change_backSub)
+cv2.createTrackbar('MOG2Threshold', 'tools' , 67, 100, on_change_backSub)
 cv2.createTrackbar('AreaThreshold', 'tools' , 60, 100, on_change_area)
 cv2.createTrackbar('ProcessRectangle_X', 'tools' , 850, int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), on_change_process_rectangle_x)
 cv2.createTrackbar('ProcessRectangle_Width', 'tools' , 300, int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)-pt1[0]), on_change_process_rectangle_width)
