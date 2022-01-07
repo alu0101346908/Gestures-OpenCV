@@ -29,8 +29,30 @@ def on_change_area(value):
 	if (value > 0):
 		area_threshold = value
 
-	
-cap = cv2.VideoCapture(2)
+def on_change_process_rectangle_y(value):
+	global pt1
+	if (value > 0 and (value <= pt2[1])):
+		pt1 = (pt1[0],value)
+		cv2.setTrackbarMax('ProcessRectangle_Height', 'tools' ,int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)-pt1[1]))
+		cv2.setTrackbarPos('ProcessRectangle_Height', 'tools' ,pt2[1]-pt1[1])
+def on_change_process_rectangle_x(value):
+	global pt1
+	if (value > 0 and value <= pt2[0]):
+		pt1 = (value,pt1[1])
+		cv2.setTrackbarMax('ProcessRectangle_Width', 'tools' ,int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)-pt1[0]))
+		cv2.setTrackbarPos('ProcessRectangle_Width', 'tools' ,pt2[0]-pt1[0])
+def on_change_process_rectangle_height(value):
+	global pt2
+	if (value > 0):
+		pt2 = (pt2[0],value+pt1[1])
+def on_change_process_rectangle_width(value):
+	global pt2
+	if (value > 0):
+		pt2 = (value+pt1[0],pt2[1])
+
+global pt1
+global pt2
+cap = cv2.VideoCapture(0)
 backSub = cv2.createBackgroundSubtractorMOG2(history = 2, detectShadows = True,varThreshold=50)
 max_angle = 90
 area_threshold = 60
@@ -39,16 +61,21 @@ if not cap.isOpened:
     exit(0)
 	#pendiente hacerlo relativo al tamaño de la feed de la camara
 pt1 = (850,250)
-pt2 = (1150,500)
+pt2 = (1150,350)
 #pt1 = (1300,250)
 #pt2 = (1700,700)
 cv2.namedWindow('roi')
-cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
+cv2.namedWindow('tools',cv2.WINDOW_NORMAL)
+cv2.namedWindow('frame')
 cv2.moveWindow('roi',120,300)
 cv2.moveWindow('frame',600,100)
-cv2.createTrackbar('Angle', 'roi' , 90, 180, on_change)
-cv2.createTrackbar('MOG2Threshold', 'roi' , 67, 100, on_change_backSub)
-cv2.createTrackbar('AreaThreshold', 'roi' , 60, 100, on_change_area)
+cv2.createTrackbar('Angle', 'tools' , 90, 180, on_change)
+cv2.createTrackbar('MOG2Threshold', 'tools' , 50, 100, on_change_backSub)
+cv2.createTrackbar('AreaThreshold', 'tools' , 60, 100, on_change_area)
+cv2.createTrackbar('ProcessRectangle_X', 'tools' , 850, int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), on_change_process_rectangle_x)
+cv2.createTrackbar('ProcessRectangle_Width', 'tools' , 300, int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)-pt1[0]), on_change_process_rectangle_width)
+cv2.createTrackbar('ProcessRectangle_Y', 'tools' , 250, int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), on_change_process_rectangle_y)
+cv2.createTrackbar('ProcessRectangle_Height', 'tools' , 250, int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)-pt1[1]), on_change_process_rectangle_height)
 learning_rate = -1
 while (True):
 	ret,frame=cap.read()
@@ -60,7 +87,6 @@ while (True):
 	roi = frame[pt1[1]:pt2[1],pt1[0]:pt2[0],:].copy()
 	cv2.rectangle(frame,pt1,pt2,(255,0,0))
 	imS = cv2.resize(frame, (1280, 720))
-
 	gray = cv2.cvtColor(roi,cv2.COLOR_RGB2GRAY)
 	fgMask = backSub.apply(roi,None,learning_rate)
 	fgMask_3_channel = cv2.cvtColor(fgMask, cv2.COLOR_GRAY2BGR)
@@ -88,7 +114,7 @@ while (True):
 					depth = d/256.0
 					#print(depth)
 					ang = angle(start,end,far)
-					if (ang < max_angle and depth > 10):
+					if (ang < max_angle and depth > 20):
 						cv2.line(roi,start,end,[255,0,0],2)
 						cv2.circle(roi,far,5,[0,0,255],-1)
 						valid_defect_count += 1
@@ -117,8 +143,12 @@ while (True):
 	if keyboard & 0xFF == ord('q'):
 		break
 	if keyboard & 0xFF == ord('p'):
+		if (learning_rate != 0):
+			cv2.setWindowTitle('roi', 'roi - Learning Rate pausado')
 		learning_rate = 0
 	if keyboard & 0xFF == ord('r'):
+		if (learning_rate != -1):
+			cv2.setWindowTitle('roi', 'roi')
 		learning_rate = -1
 
 cap.release()
