@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import math
 
-def angle(s,e,f):
+def angle(s,e,f): # Funcion proporcionada por el profesor para el calculo del angulo que forman los defectos de convexidad
     v1 = [s[0]-f[0],s[1]-f[1]]
     v2 = [e[0]-f[0],e[1]-f[1]]
     ang1 = math.atan2(v1[1],v1[0])
@@ -14,17 +14,17 @@ def angle(s,e,f):
         ang += 2*np.pi
     return ang*180/np.pi
 	
-def on_change(value):
+def on_change_angle(value): # Funcion invocada por el slider de angulo para controlar el angulo maximo que puede tener los defectos de convexidad
 	global max_angle
 	if (value > 0):
 		max_angle = value
 
-def on_change_backSub(value):
+def on_change_backSub(value): # Funcion invocada por el slider del MOG2Threshold que reinicia el modelo con un varThreshold diferente
 	global backSub
 	if (value > 0):
 		backSub = cv2.createBackgroundSubtractorMOG2(history = 2, detectShadows = True,varThreshold=value)
 
-def on_change_area(value):
+def on_change_area(value): # Funcion invocada por el slider para
 	global area_threshold
 	if (value > 0):
 		area_threshold = value
@@ -79,7 +79,7 @@ cv2.namedWindow('frame')
 cv2.namedWindow('tools',cv2.WINDOW_NORMAL)
 cv2.moveWindow('roi',120,300)
 cv2.moveWindow('frame',600,100)
-cv2.createTrackbar('Angle', 'tools' , 90, 180, on_change)
+cv2.createTrackbar('Angle', 'tools' , 90, 180, on_change_angle)
 cv2.createTrackbar('MOG2Threshold', 'tools' , 67, 100, on_change_backSub)
 cv2.createTrackbar('AreaThreshold', 'tools' , 60, 100, on_change_area)
 cv2.createTrackbar('ProcessRectangle_X', 'tools' , 850, int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), on_change_process_rectangle_x)
